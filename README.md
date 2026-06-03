@@ -1,0 +1,14 @@
+ ________ ___  ________  _______  _________  ___  _____ ______   _______      
+|\  _____\\  \|\   __  \|\  ___ \|\___   ___\\  \|\   _ \  _   \|\  ___ \     
+\ \  \__/\ \  \ \  \|\  \ \   __/\|___ \  \_\ \  \ \  \\\__\ \  \ \   __/|    
+ \ \   __\\ \  \ \   _  _\ \  \_|/__  \ \  \ \ \  \ \  \\|__| \  \ \  \_|/__  
+  \ \  \_| \ \  \ \  \\  \\ \  \_|\ \  \ \  \ \ \  \ \  \    \ \  \ \  \_|\ \ 
+   \ \__\   \ \__\ \__\\ _\\ \_______\  \ \__\ \ \__\ \__\    \ \__\ \_______\
+    \|__|    \|__|\|__|\|__|\|_______|   \|__|  \|__|\|__|     \|__|\|_______|
+
+
+Hey there! This is the CDN for Firetime sites. This site holds images, videos, 
+and things for OBS for my streams, and a bunch of other stuff. I'm working on
+making a directory on this page so people can easily access content here.
+...and by people I mean me :)
+
