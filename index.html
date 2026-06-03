@@ -1,28 +1,674 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Firetime CDN</title>
+  <meta name="description" content="Content Delivery Network for sites by firetime" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bg:        #ffffff;
+      --surface:   #ececec;
+      --border:    #640000;
+      --border-hover: #333333;
+      --text:      #000000;
+      --muted:     #888888;
+      --accent:    #f15c36;
+      --logo:      #ffffff;
+      --accent-dim:#ff6b0022;
+      --tag-bg:    #ffffff;
+      --radius:    8px;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
 
-    <style>
-      .ascii-art {
-        font-family: monospace;
-        white-space: pre;
+    html { background: var(--bg); color: var(--text); font-family: var(--font-sans); }
+    body { min-height: 100vh; }
+
+    a { color: inherit; text-decoration: none; }
+
+    .wrapper { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 50px;
+      height: 50px;
+      background: var(--logo);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-icon svg { display: block; }
+    .logo-text {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .logo-sub {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .header-links a {
+      font-size: 13px;
+      color: var(--muted);
+      transition: color 0.15s;
+    }
+    .header-links a:hover { color: var(--text); }
+
+    .hero {
+      padding: 64px 0 40px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      margin-top: 12px;
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      font-family: var(--font-mono);
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 2px;
+    }
+
+    .controls {
+      padding: 32px 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .search-wrap {
+      position: relative;
+    }
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+    #search {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      padding: 11px 14px 11px 40px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    #search::placeholder { color: var(--muted); }
+    #search:focus { border-color: var(--accent); }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-right: 4px;
+    }
+    .filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: var(--font-sans);
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover { border-color: var(--border-hover); color: var(--text); }
+    .filter-btn.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .results-info {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .results-info span { color: var(--text); font-weight: 500; }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      padding-bottom: 64px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.15s, transform 0.15s;
+      cursor: default;
+    }
+    .card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+    }
+
+    .card-preview {
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      padding: 12px;
+    }
+    .card-preview img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .card-preview .file-icon {
+      font-size: 40px;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      text-align: center;
+    }
+    .card-preview .file-ext {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .card-body {
+      padding: 12px;
+    }
+    .card-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+    .card-path {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 10px;
+    }
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .tag {
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      padding: 2px 7px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-family: var(--font-sans);
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+    .copy-btn.copied { border-color: #22c55e; color: #22c55e; background: #22c55e14; }
+
+    #empty {
+      display: none;
+      text-align: center;
+      padding: 80px 0;
+      color: var(--muted);
+    }
+    #empty svg { margin: 0 auto 16px; display: block; opacity: 0.3; }
+    #empty p { font-size: 14px; }
+
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 100;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast .toast-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; flex-shrink: 0; }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px 0;
+    }
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .footer-inner p {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .footer-inner a { color: var(--accent); }
+    .cdn-url {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 5px;
+    }
+
+    @media (max-width: 600px) {
+      .header-inner { flex-direction: column; align-items: flex-start; }
+      .stats { gap: 20px; }
+      #grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="wrapper">
+      <div class="header-inner">
+        <a href="/" class="logo">
+          <div class="logo-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><defs><linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="nnneon-grad"><stop stop-color="#ed3237" stop-opacity="1" offset="0%"></stop><stop stop-color="#f58634" stop-opacity="1" offset="100%"></stop></linearGradient><filter id="nnneon-filter" x="-100%" y="-100%" width="400%" height="400%" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+	           <feGaussianBlur stdDeviation="17 8" x="0%" y="0%" width="100%" height="100%" in="SourceGraphic" edgeMode="none" result="blur"></feGaussianBlur></filter><filter id="nnneon-filter2" x="-100%" y="-100%" width="400%" height="400%" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+	           <feGaussianBlur stdDeviation="10 17" x="0%" y="0%" width="100%" height="100%" in="SourceGraphic" edgeMode="none" result="blur"></feGaussianBlur></filter></defs><g stroke-width="16" stroke="url(#nnneon-grad)" fill="none"><circle r="150" cx="400" cy="400" filter="url(#nnneon-filter)"></circle><circle r="150" cx="412" cy="400" filter="url(#nnneon-filter2)" opacity="0.25"></circle><circle r="150" cx="388" cy="400" filter="url(#nnneon-filter2)" opacity="0.25"></circle><circle r="150" cx="400" cy="400"></circle></g></svg>
+          </div>
+          <div
+            <div class="logo-text">Firetime CDN</div>
+          </div>
+        </a>
+        <div class="header-links">
+          <a href="https://firetime.me" target="_blank" rel="noopener">Homepage</a>
+          <a href="https://github.com/firetimeindustries/cdn" target="_blank" rel="noopener">Browse Repo</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <div class="wrapper">
+    <div class="hero">
+      <h1>Content Delivery Network<br /><span>For Firetime sites</span></h1>
+      <p>Browse, search, and copy CDN URLs for all assets &mdash; images, SVGs, and more.</p>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-num" id="total-count">—</div>
+          <div class="stat-label">Total Files</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="img-count">—</div>
+          <div class="stat-label">Images</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="svg-count">—</div>
+          <div class="stat-label">SVGs</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="other-count">—</div>
+          <div class="stat-label">Other</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <div class="search-wrap">
+        <span class="search-icon">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <path d="M10 6.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0ZM9.25 10.31a5 5 0 1 1 1.06-1.06l3.22 3.22a.75.75 0 1 1-1.06 1.06L9.25 10.31Z" fill="currentColor"/>
+          </svg>
+        </span>
+        <input id="search" type="text" placeholder="Search files by name or path…" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Type:</span>
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="svg">SVG</button>
+        <button class="filter-btn" data-filter="image">Images</button>
+        <button class="filter-btn" data-filter="json">JSON</button>
+        <button class="filter-btn" data-filter="other">Other</button>
+      </div>
+    </div>
+
+    <!-- Results info -->
+    <div class="results-info" id="results-info"></div>
+
+    <!-- Grid -->
+    <div id="grid"></div>
+
+    <!-- Empty state -->
+    <div id="empty">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2"/>
+        <path d="M16 24h16M24 16v16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <p>No files match your search.</p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="wrapper">
+      <div class="footer-inner">
+        <p>Hosted on <a href="https://github.com/firetimeindustries/cdn" target="_blank" rel="noopener">GitHub</a> &mdash; <a href="https://cdn.firetime.me" target="_blank">cdn.firetime.me</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toast">
+    <span class="toast-dot"></span>
+    <span id="toast-text">URL copied!</span>
+  </div>
+
+  <script>
+    // ── config for github repo ────────────────────────────────────────────────
+    // Files are fetched from github's api, the raw gives me a 400 error, but if i remove it the code html wont run, idk why
+    const CDN_BASE  = "https://cdn.firetime.me";
+    const GITHUB_RAW = "https://raw.githubusercontent.com/firetimeindustries/cdn/main";
+    const GITHUB_API = "https://api.github.com/repos/firetimeindustries/cdn/git/trees/main?recursive=1";
+
+    let FILES = [];
+
+    // ── random stuff ───────────────────────────────────────────────
+    function getExt(path) {
+      return path.split('.').pop().toLowerCase();
+    }
+
+    function getType(ext) {
+      if (ext === 'svg') return 'svg';
+      if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'ico'].includes(ext)) return 'image';
+      if (ext === 'json') return 'json';
+      return 'other';
+    }
+
+    function getName(path) {
+      return path.split('/').pop();
+    }
+
+    function getDir(path) {
+      const parts = path.split('/');
+      parts.pop();
+      return parts.join('/');
+    }
+
+    function isVisual(ext) {
+      return ['svg', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'ico'].includes(ext);
+    }
+
+    let toastTimer;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-text').textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    // function copyToClipboard(text, btn) {
+    //  navigator.clipboard.writeText(text).then(() => {
+    //    btn.classList.add('copied');
+    //    btn.querySelector('span').textContent = 'Copied!';
+    //    showToast('URL copied to clipboard');
+    //    setTimeout(() => {
+    //      btn.classList.remove('copied');
+    //      btn.querySelector('span').textContent = 'Copy URL';
+    //    }, 1800);
+    //  });
+    //}
+
+    // ── render the cards ───────────────────────────────────────────
+    function renderCard(file) {
+      const ext = getExt(file.path);
+      const type = getType(ext);
+      const name = getName(file.path);
+      const dir = getDir(file.path);
+      const cdnUrl = `${CDN_BASE}/${file.path}`;
+      const rawUrl = `${GITHUB_RAW}/${file.path}`;
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.type = type;
+      card.dataset.name = name.toLowerCase();
+      card.dataset.path = file.path.toLowerCase();
+
+      let previewHtml;
+      if (isVisual(ext)) {
+        previewHtml = `
+          <div class="card-preview">
+            <img src="${rawUrl}" alt="${name}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'file-icon\\'>.${ext}<div class=\\'file-ext\\'>Preview unavailable</div></div>'" />
+          </div>`;
+      } else {
+        previewHtml = `
+          <div class="card-preview">
+            <div class="file-icon">
+              .${ext}
+              <div class="file-ext">${type}</div>
+            </div>
+          </div>`;
       }
-    </style>
+        // this is the copy button, it goes between the <span class=> and the </div> in the card.innerhtml under this
+        //   <button class="copy-btn" onclick="copyToClipboard('${cdnUrl}', this)">
+        //    <svg width="11" height="11" viewBox="0 0 15 15" fill="none">
+        //      <path d="M5 2H3.5A1.5 1.5 0 0 0 2 3.5v8A1.5 1.5 0 0 0 3.5 13h8a1.5 1.5 0 0 0 1.5-1.5V10M5 2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V2Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+        //    </svg>
+        //    <span>Copy URL</span>
+       //   </button>
+        
+        
+       card.innerHTML = `
+        ${previewHtml}
+         <div class="card-body">
+          <div class="card-name" title="${name}">${name}</div>
+          <div class="card-path" title="${dir}">${dir}</div>
+          <div class="card-footer">
+            <span class="tag">${ext}</span>
+          </div>
+        </div>`;
 
-    <div class="ascii-art">
-<pre>
- ________ ___  ________  _______  _________  ___  _____ ______   _______      
-|\  _____\\  \|\   __  \|\  ___ \|\___   ___\\  \|\   _ \  _   \|\  ___ \     
-\ \  \__/\ \  \ \  \|\  \ \   __/\|___ \  \_\ \  \ \  \\\__\ \  \ \   __/|    
- \ \   __\\ \  \ \   _  _\ \  \_|/__  \ \  \ \ \  \ \  \\|__| \  \ \  \_|/__  
-  \ \  \_| \ \  \ \  \\  \\ \  \_|\ \  \ \  \ \ \  \ \  \    \ \  \ \  \_|\ \ 
-   \ \__\   \ \__\ \__\\ _\\ \_______\  \ \__\ \ \__\ \__\    \ \__\ \_______\
-    \|__|    \|__|\|__|\|__|\|_______|   \|__|  \|__|\|__|     \|__|\|_______|
-</pre>
-<p>
-Hey there! This is the CDN for Firetime sites. This site holds images, videos, 
-and things for OBS for my streams, and a bunch of other stuff. I'm working on
-making a directory on this page so people can easily access content here.
-...and by people I mean me :)
-</p>
+      return card;
+    }
 
-  
+    // ── stats ─────────────────────────────────────────────────
+    function updateStats() {
+      const total = FILES.length;
+      const imgs = FILES.filter(f => getType(getExt(f.path)) === 'image').length;
+      const svgs = FILES.filter(f => getType(getExt(f.path)) === 'svg').length;
+      const others = FILES.filter(f => !['image','svg'].includes(getType(getExt(f.path)))).length;
+      document.getElementById('total-count').textContent = total;
+      document.getElementById('img-count').textContent = imgs;
+      document.getElementById('svg-count').textContent = svgs;
+      document.getElementById('other-count').textContent = others;
+    }
+
+    const grid = document.getElementById('grid');
+
+    function renderAll() {
+      grid.innerHTML = '';
+      FILES.forEach(f => grid.appendChild(renderCard(f)));
+      updateStats();
+    }
+
+    // ── search and filter ───────────────────────────────────────
+    let activeFilter = 'all';
+    let searchQuery = '';
+
+    function applyFilters() {
+      const cards = grid.querySelectorAll('.card');
+      let visible = 0;
+
+      cards.forEach(card => {
+        const matchesType = activeFilter === 'all' || card.dataset.type === activeFilter;
+        const matchesSearch = !searchQuery
+          || card.dataset.name.includes(searchQuery)
+          || card.dataset.path.includes(searchQuery);
+
+        const show = matchesType && matchesSearch;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+
+      document.getElementById('empty').style.display = visible === 0 ? 'block' : 'none';
+      const info = document.getElementById('results-info');
+      if (searchQuery || activeFilter !== 'all') {
+        info.innerHTML = `Showing <span>${visible}</span> of <span>${FILES.length}</span> files`;
+      } else {
+        info.innerHTML = `<span>${FILES.length}</span> files available`;
+      }
+    }
+
+    document.getElementById('search').addEventListener('input', e => {
+      searchQuery = e.target.value.toLowerCase().trim();
+      applyFilters();
+    });
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+        applyFilters();
+      });
+    });
+
+    function showLoading() {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:80px 0;color:var(--muted);font-size:14px;">
+          Fetching file list from GitHub…
+        </div>`;
+    }
+
+    function showError(msg) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:80px 0;color:var(--muted);font-size:14px;">
+          ${msg}
+        </div>`;
+    }
+
+    // ── the accual fetching from the git api ─────────────────
+    async function init() {
+      showLoading();
+      try {
+        const res = await fetch(GITHUB_API);
+        if (!res.ok) throw new Error(`GitHub API responded with ${res.status}`);
+        const data = await res.json();
+
+        // Filter to only blob entries (actual files), skip folders and README
+        const IGNORED = ['readme.md', 'license', '.gitignore', '.gitattributes'];
+        FILES = data.tree
+          .filter(item =>
+            item.type === 'blob' &&
+            !IGNORED.includes(item.path.toLowerCase()) &&
+            !item.path.toLowerCase().endsWith('readme.md')
+          )
+          .map(item => ({ path: item.path }));
+
+        renderAll();
+        applyFilters();
+      } catch (err) {
+        showError(`Could not load file list: ${err.message}. Try refreshing.`);
+      }
+    }
+
+      
+      // im too lazy to have multible files so i crammed everything into one .html, i think this will make vercel deployments load faster, i hope. i have to wait almost 5 mins for my homepage firetime.me to deploy, and im not paying 20$ a month for vercel premium or whatever it is. sorry for the rant, this is just a note for future firetime to fix, and dont host a cdn on github, dont, just why. 
+    init();
+  </script>
+</body>
+</html>
